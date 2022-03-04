@@ -3,72 +3,34 @@
 namespace App\Imports;
 
 use App\Models\User;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Hash;
-use Maatwebsite\Excel\Concerns\Importable;
-use Maatwebsite\Excel\Concerns\RegistersEventListeners;
-use Maatwebsite\Excel\Concerns\SkipsErrors;
-use Maatwebsite\Excel\Concerns\SkipsFailures;
-use Maatwebsite\Excel\Concerns\SkipsOnError;
-use Maatwebsite\Excel\Concerns\SkipsOnFailure;
-use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\WithBatchInserts;
-use Maatwebsite\Excel\Concerns\WithChunkReading;
-use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\WithValidation;
-use Maatwebsite\Excel\Events\AfterImport;
-use Maatwebsite\Excel\Validators\Failure;
-use Throwable;
+use Maatwebsite\Excel\Concerns\WithStartRow;
+use Maatwebsite\Excel\Concerns\WithCustomCsvSettings;
 
-class UsersImport implements
-    ToCollection,
-    WithHeadingRow,
-    SkipsOnError,
-    WithValidation,
-    SkipsOnFailure,
-    WithChunkReading,
-    ShouldQueue,
-    WithEvents
+class UsersImport implements ToModel, WithStartRow, WithCustomCsvSettings
 {
-    use Importable, SkipsErrors, SkipsFailures, RegistersEventListeners;
-
-
-    public function collection(Collection $rows)
+    public function startRow(): int
     {
-        foreach ($rows as $row) {
-            $user = User::create([
-                'name' => $row['name'],
-                'email' => $row['email'],
-                'password' => Hash::make('password')
-            ]);
-
-            // $user->groups()->create([
-            //     'name' => $row['name']
-            // ]);
-        }
+        return 2;
     }
 
-    public function rules(): array
+    public function getCsvSettings(): array
     {
         return [
-            '*.email' => ['email', 'unique:users,email']
+            'delimiter' => ','
         ];
     }
-
-
-    public function chunkSize(): int
+    /**
+    * @param array $row
+    *
+    * @return \Illuminate\Database\Eloquent\Model|null
+    */
+    public function model(array $row)
     {
-        return 1000;
+        return new User([
+           'name'     => $row[0],
+           'email'    => $row[1],
+           'password' => \Hash::make($row[2]),
+        ]);
     }
-
-    public static function afterImport(AfterImport $event)
-    {
-    }
-
-    public function onFailure(Failure ...$failure)
-    {
-    }
-}
+} 

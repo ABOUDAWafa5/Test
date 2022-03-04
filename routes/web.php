@@ -1,7 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\UsersImport;
+use App\Exports\UsersExport;
+use App\Models\User;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -13,11 +16,26 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+
+Route::get('data', 'App\Http\Controllers\UserController@index');
+
+
 Route::get('/', function () {
-    return view('welcome');
+    
+    return view('welcome',[
+        'users' => App\Models\User::all()
+    ]);
 });
 
+Route::post('import', function () {
+    
+    $fileName = time().'_'.request()->file->getClientOriginalName();
+    request()->file('file')->storeAs('reports', $fileName, 'public');
+    
+    Excel::import(new UsersImport, request()->file('file'));
+    return redirect()->back()->with('success','Data Imported Successfully');
+});
 
-
-Route::get('/users/import', 'App\Http\Controllers\UsersImportController@show');
-Route::post('/users/import', 'App\Http\Controllers\UsersImportController@store');
+Route::get('export-csv', function () {
+    return Excel::download(new UsersExport, 'users.csv');
+});
