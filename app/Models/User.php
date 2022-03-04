@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Models;
-
+use App\Models\Groupe;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -43,8 +43,8 @@ class User extends Authenticatable
     ];
 
 
-    public function groups()
+    public function groupes()
     {
-        return $this->hasOne(Groupe::class);
+        return $this->belongsToMany(Groupe::class);
     }
 }
